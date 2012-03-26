@@ -3,7 +3,7 @@
 * File      :   owncloud.php (based on vcarddir.php from z-push)
 * Project   :   oczpush, https://github.com/gza/oczpush
 * Descr     :   This backend is for owncloud (contacts only, for now)
-* Licence   :	GPL
+* Licence   :	AGPL
 ************************************************/
 
 
