@@ -146,6 +146,7 @@ class BackendOCCombinedConfig {
 		} else {
 			unset($conf['backends']['i']);
 		}
+		$conf['rootcreatefolderbackend'] = OC_MAIL;
 	} else {
 		unset($conf['backends']['m']);
 		unset($conf['backends']['i']);
