@@ -118,7 +118,7 @@
  *  Backend settings
  */
     // The data providers that we are using (see configuration below)
-    define('BACKEND_PROVIDER', "BackendOCContacts");
+    define('BACKEND_PROVIDER', "BackendOCCombined");
 
 
     // ************************
@@ -162,10 +162,11 @@
     define('VCARDDIR_DIR', '/home/%u/.kde/share/apps/kabc/stdvcf');
 
     // **********************
-    //  BackendOCContacts settings
+    //  BackendOCCombined settings
     // **********************
     define('OC_DIR', '/var/www/localhost/htdocs/ocdev/owncloud');
-
+    // uncomment if you want to use a mail backend BackendMaildir -> m, BackendIMAP -> i
+    // define('OC_MAIL', 'i');
 
 /**********************************************************************************
  *  Search provider settings
