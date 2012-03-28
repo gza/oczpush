@@ -24,9 +24,26 @@ Todo :
 - Multi folder (multi calendar/addressbook)
 - What else, tell me :)
 
-Install:
-- see INSTALL for install instruction
-- update OC_DIR config var in config.php with owncloud directory
+Quick Install, debian/ubuntu style (thks to AlainB) :
+- checkout :
+ cd /var/www ; git clone https://gza@github.com/gza/oczpush.git
 
-Upgrade z-push :
-- z-push's .svn is integrated, svn up will work, but will probably prevent any git pull to work anymore
+- php parameters (I prefer put it in apache conf) + Apache conf
+
+Alias /Microsoft-Server-ActiveSync /var/www/oczpush/index.php
+ <Directory "/var/www/oczpush/">
+    php_flag magic_quotes_gpc off
+    php_flag register_globals off
+    php_flag magic_quotes_runtime off
+    php_flag short_open_tag on
+ </Directory>
+
+- dirs
+mkdir -p /var/log/z-push /var/lib/z-push /var/www/oczpush/
+chown www-data:www-data /var/log/z-push /var/lib/z-push
+
+- edit /var/www/oczpush/config.php
+define('OC_DIR', '/var/www/owncloud');
+
+Upgrade z-push codebase :
+- z-push's .svn is integrated, svn up should work, but will probably prevent any git pull to work anymore
