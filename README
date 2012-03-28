@@ -3,22 +3,28 @@ oczupsh - ActiveSync for Owncloud
 Based on
 - z-push 2.0 beta's svn version
    http://svn.berlios.de/svnroot/repos/z-push/branches/z-push-2
-- Owncloud's Head
+- Owncloud's Head (should work on stable 3.0.1)
    git://gitorious.org/owncloud/owncloud.git
 
 What works :
 - Contact sync
 - Tested with Android Emulator 2.3.3
+- Reported to work on :
+  - Samsung Galaxy S2
+  - Iphone 4 and Ipad 2 (thanks a40a)
 
 Todo :
 - Fix VCARD format to V3.0
-- Do calendar, Notes ?
-- Owncloud config
+- Finish calendar/tasks
 - mail/imap from owncloud's conf
-- Owncloud integration (apps/ or not?) ?
-- Lot of things
+- Owncloud integration :
+  - app
+  - configuration
+  - device management (wipe, lock, etc...)
+- Multi folder (multi calendar/addressbook)
+- What else, tell me :)
 
-Install :
+Install:
 - see INSTALL for install instruction
 - update OC_DIR config var in config.php with owncloud directory
 
