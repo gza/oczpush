@@ -7,9 +7,9 @@
 ************************************************/
 
 
-define('STORE_SUPPORTS_UNICODE', true);
+if (! defined('STORE_SUPPORTS_UNICODE') ) define('STORE_SUPPORTS_UNICODE', true);
 setlocale(LC_CTYPE, "en_US.UTF-8");
-define('STORE_INTERNET_CPID', INTERNET_CPID_UTF8);
+if (! defined('STORE_INTERNET_CPID') ) define('STORE_INTERNET_CPID', INTERNET_CPID_UTF8);
 
 include_once('lib/default/diffbackend/diffbackend.php');
 require_once(OC_DIR.'/lib/config.php');
@@ -117,7 +117,7 @@ class BackendOCContacts extends BackendDiff {
     public function GetFolderList() {
         ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::GetFolderList()');
         $contacts = array();
-        $folder = $this->StatFolder("root");
+        $folder = $this->StatFolder("contacts");
         $contacts[] = $folder;
 
         return $contacts;
@@ -133,7 +133,7 @@ class BackendOCContacts extends BackendDiff {
      */
     public function GetFolder($id) {
         ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::GetFolder('.$id.')');
-        if($id == "root") {
+        if($id == "contacts") {
             $folder = new SyncFolder();
             $folder->serverid = $id;
             $folder->parentid = "0";
@@ -235,7 +235,7 @@ class BackendOCContacts extends BackendDiff {
      */
     public function GetMessage($folderid, $id, $contentparameters) {
         ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::GetMessage('.$folderid.', '.$id.', ..)');
-        if($folderid != "root")
+        if($folderid != "contacts")
             return;
 
         $types = array ('dom' => 'type', 'intl' => 'type', 'postal' => 'type', 'parcel' => 'type', 'home' => 'type', 'work' => 'type',
@@ -259,7 +259,6 @@ class BackendOCContacts extends BackendDiff {
 	$card=OC_Contacts_VCard::findWhereDAVDataIs($this->addressBookId, $id.'.vcf');
 	$data = $card['carddata'];
 
-       // $data = file_get_contents($this->getPath() . "/" . $id);
         $data = str_replace("\x00", '', $data);
         $data = str_replace("\r\n", "\n", $data);
         $data = str_replace("\r", "\n", $data);
@@ -464,7 +463,7 @@ class BackendOCContacts extends BackendDiff {
      */
     public function StatMessage($folderid, $id) {
         ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::StatMessage('.$folderid.', '.$id.')');
-        if($folderid != "root")
+        if($folderid != "contacts")
             return false;
 
 	if($id == '')
@@ -603,8 +602,7 @@ class BackendOCContacts extends BackendDiff {
      */
     public function DeleteMessage($folderid, $id) {
 	$card=OC_Contacts_VCard::findWhereDAVDataIs($this->addressBookId,$id.'.vcf');
-	OC_Contacts_VCard::delete($card['id']);
-        return unlink($this->getPath() . '/' . $id);
+	return OC_Contacts_VCard::delete($card['id']);
     }
 
     /**
@@ -627,16 +625,6 @@ class BackendOCContacts extends BackendDiff {
     /**----------------------------------------------------------------------------------------------------------
      * private vcard-specific internals
      */
-
-    /**
-     * The path we're working on
-     *
-     * @access private
-     * @return string
-     */
-    private function getPath() {
-        return str_replace('%u', $this->store, VCARDDIR_DIR);
-    }
 
     /**
      * Escapes a string
