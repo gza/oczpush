@@ -211,8 +211,7 @@ class BackendOCContacts extends BackendDiff {
         $messages = array();
 
 	foreach ( OC_Contacts_VCard::all($this->addressBookId) as $cardEntry ) {
-		$card = OC_VObject::parse($cardEntry['carddata']);
-		$message["id"] = $card->getAsString('UID');		
+		$message["id"] = substr($cardEntry['uri'],0,-4);		
 		$message["mod"] = $cardEntry['lastmodified'];
 		$message["flags"] = 1;
 
@@ -472,9 +471,8 @@ class BackendOCContacts extends BackendDiff {
         $message = array();
 
 	$cardEntry=OC_Contacts_VCard::findWhereDAVDataIs($this->addressBookId,$id.'.vcf');
-	$card = OC_VObject::parse($cardEntry['carddata']);
 //	ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::StatMessage('.print_r($cardEntry,true));
-        $message["id"] = $card->getAsString('UID');
+        $message["id"] = substr($cardEntry['uri'],0,-4);
 	$message["mod"] = $cardEntry['lastmodified'];
         $message["flags"] = 1;
 
