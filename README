@@ -7,15 +7,18 @@ Based on
    git://gitorious.org/owncloud/owncloud.git
 
 What works :
-- Contact sync
-- Tested with Android Emulator 2.3.3
+- Contact sync (it seems that some badly formated vcard dont sync correctly)
+- Calendar sync ( with bugs : timezone problem and duplicates )
+- Tasks untested (no UI on owncloud side)
+- Tested with Android Emulator 2.3.3 and 4.0
 - Reported to work on :
   - Samsung Galaxy S2
   - Iphone 4 and Ipad 2 (thanks a40a)
+  - HTC runnyDroid ROM (Sense 3.5 + android 2.3.5)
 
 Todo :
 - Fix VCARD format to V3.0
-- Finish calendar/tasks
+- debug calendar/tasks
 - mail/imap from owncloud's conf
 - Owncloud integration :
   - app
