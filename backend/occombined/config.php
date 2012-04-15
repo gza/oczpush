@@ -55,6 +55,11 @@ class BackendOCCombinedConfig {
     // **********************
     public static $BackendOCContacts_config = array('OC_DIR' => OC_DIR);
 
+    // **********************
+    //  BackendOCCalendar settings
+    // **********************
+    public static $BackendOCCalendar_config = array('OC_DIR' => OC_DIR);
+
     // *************************
     //  BackendDummy settings
     // *************************
@@ -101,7 +106,11 @@ class BackendOCCombinedConfig {
                     'name' => 'BackendOCContacts',
                     'config' => self::$BackendOCContacts_config,
                 ),
-                'd' => array(
+                'a' => array(
+                    'name' => 'BackendOCCalendar',
+                    'config' => self::$BackendOCCalendar_config,
+                ),
+		'd' => array(
                     'name' => 'BackendDummy',
                     'config' => self::$BackendDummy_config,
                 ),

@@ -90,6 +90,8 @@ include('lib/syncobjects/syncuserinformation.php');
 include('lib/syncobjects/syncdeviceinformation.php');
 include('lib/syncobjects/syncdevicepassword.php');
 include('lib/syncobjects/syncitemoperationsattachment.php');
+include('lib/default/backend.php');
+
 include('config.php');
 include('version.php');
 
