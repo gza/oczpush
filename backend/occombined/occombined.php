@@ -7,6 +7,9 @@
 * License   :   AGPL (like original)
 ************************************************/
 
+// default backend
+include_once('lib/default/backend.php');
+
 //include the OCCombinedBackend's own config file
 require_once("backend/occombined/config.php");
 require_once("backend/occombined/importer.php");

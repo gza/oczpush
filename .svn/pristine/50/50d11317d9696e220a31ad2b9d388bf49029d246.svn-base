@@ -69,7 +69,7 @@
     define('LOGFILEDIR', '/var/log/z-push/');
     define('LOGFILE', LOGFILEDIR . 'z-push.log');
     define('LOGERRORFILE', LOGFILEDIR . 'z-push-error.log');
-    define('LOGLEVEL', LOGLEVEL_DEBUG);
+    define('LOGLEVEL', LOGLEVEL_INFO);
     define('LOGAUTHFAIL', false);
 
 
@@ -118,7 +118,7 @@
  *  Backend settings
  */
     // The data providers that we are using (see configuration below)
-    define('BACKEND_PROVIDER', "BackendOCCombined");
+    define('BACKEND_PROVIDER', "BackendZarafa");
 
 
     // ************************
@@ -161,12 +161,6 @@
     // **********************
     define('VCARDDIR_DIR', '/home/%u/.kde/share/apps/kabc/stdvcf');
 
-    // **********************
-    //  BackendOCCombined settings
-    // **********************
-    define('OC_DIR', '/var/www/localhost/htdocs/ocdev/owncloud');
-    // uncomment if you want to use a mail backend BackendMaildir -> m, BackendIMAP -> i
-    // define('OC_MAIL', 'i');
 
 /**********************************************************************************
  *  Search provider settings
