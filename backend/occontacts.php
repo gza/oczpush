@@ -12,6 +12,11 @@ setlocale(LC_CTYPE, "en_US.UTF-8");
 if (! defined('STORE_INTERNET_CPID') ) define('STORE_INTERNET_CPID', INTERNET_CPID_UTF8);
 
 include_once('lib/default/diffbackend/diffbackend.php');
+
+// OC4 fix
+if(isset($_SERVER['HTTPS']) and $_SERVER['HTTPS']<>'') $protocol='https://'; else $protocol='http://';
+if(! isset($_SERVER['HTTP_REFERER'])) $_SERVER['HTTP_REFERER']=$protocol.$_SERVER['SERVER_NAME'].'/index.php';
+// End OC4 fix
 require_once(OC_DIR.'/lib/config.php');
 require_once(OC_DIR.'/lib/base.php');
 
