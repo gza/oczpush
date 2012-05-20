@@ -234,8 +234,9 @@ class BackendOCCalendar extends BackendDiff {
     public function GetMessageList($folderid, $cutoffdate) {
         ZLog::Write(LOGLEVEL_DEBUG, 'OCCalendar::GetMessageList('.$folderid.')');
         $messages = array();
-//@TODO filter on objecttype
 	foreach ( OC_Calendar_Object::all($this->calendarId) as $objectEntry ) {
+		if ($objectEntry['objecttype']=='VTODO' && $folderid=='calendar') continue;
+		if ($objectEntry['objecttype']=='VEVENT' && $folderid=='tasks') continue;
 		if ($objectEntry['lastmodified']>=$cutoffdate) {
 			$message["id"] = substr($objectEntry['uri'],0,-4);		
 			$message["mod"] = $objectEntry['lastmodified'];
