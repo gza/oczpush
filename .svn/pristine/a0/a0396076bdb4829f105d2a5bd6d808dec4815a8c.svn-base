@@ -121,12 +121,6 @@ class Sync extends RequestProcessor {
                         // this forces a resync of all states previous to Z-Push 2 beta4
                         if (! $spa instanceof SyncParameters)
                             throw new StateInvalidException("Saved state are not of type SyncParameters");
-
-                        // new/resync requested
-                        if ($synckey == "0")
-                            $spa->RemoveSyncKey();
-                        else if ($synckey !== false)
-                            $spa->SetSyncKey($synckey);
                     }
                     catch (StateInvalidException $stie) {
                         $spa = new SyncParameters();
@@ -140,6 +134,12 @@ class Sync extends RequestProcessor {
 
                     if ($class !== false)
                         $spa->SetContentClass($class);
+
+                    // new/resync requested
+                    if ($synckey == "0")
+                        $spa->RemoveSyncKey();
+                    else if ($synckey !== false)
+                        $spa->SetSyncKey($synckey);
 
                     // Get class for as versions >= 12.0
                     if (! $spa->HasContentClass()) {
@@ -395,7 +395,7 @@ class Sync extends RequestProcessor {
 
                             // TODO check if the failsyncstate applies for conflict detection as well
                             if ($status == SYNC_STATUS_SUCCESS && $nchanges == 0)
-                                $importer->LoadConflicts($spa->GetCPO(), $sc->GetParameter($spa, "state"));
+                                $importer->LoadConflicts($spa, $sc->GetParameter($spa, "state"));
 
                             if ($status == SYNC_STATUS_SUCCESS)
                                 $nchanges++;
@@ -796,10 +796,6 @@ class Sync extends RequestProcessor {
                             self::$encoder->content($status);
                         self::$encoder->endTag();
 
-                        // announce failing status to the process loop detection
-                        if ($status !== SYNC_STATUS_SUCCESS)
-                            self::$deviceManager->AnnounceProcessStatus($spa->GetFolderId(), $status);
-
                         // Output IDs and status for incoming items & requests
                         if($status == SYNC_STATUS_SUCCESS && (
                             !empty($actiondata["clientids"]) ||
@@ -971,7 +967,8 @@ class Sync extends RequestProcessor {
                         }
 
                         // save SyncParameters
-                        if ($status == SYNC_STATUS_SUCCESS && empty($actiondata["fetchids"]))
+                        // TODO check if we need changed data in case of a StatusException
+                        if ($status == SYNC_STATUS_SUCCESS)
                             $sc->SaveCollection($spa);
 
                     } // END foreach collection

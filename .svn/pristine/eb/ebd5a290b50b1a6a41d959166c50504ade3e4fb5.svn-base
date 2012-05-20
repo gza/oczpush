@@ -161,7 +161,6 @@ class Ping extends RequestProcessor {
                     break;
                 case SyncCollections::ERROR_WRONG_HIERARCHY:
                     $pingstatus = SYNC_PINGSTATUS_FOLDERHIERSYNCREQUIRED;
-                    self::$deviceManager->AnnounceProcessStatus(false, $pingstatus);
                     break;
 
             }
@@ -177,25 +176,23 @@ class Ping extends RequestProcessor {
                 self::$encoder->content($foundchanges ? SYNC_PINGSTATUS_CHANGES : SYNC_PINGSTATUS_HBEXPIRED);
             self::$encoder->endTag();
 
-            if (! $pingstatus) {
-                self::$encoder->startTag(SYNC_PING_FOLDERS);
+            self::$encoder->startTag(SYNC_PING_FOLDERS);
 
-                if (empty($fakechanges))
-                    $changes = $sc->GetChangedFolderIds();
-                else
-                    $changes = $fakechanges;
+            if (empty($fakechanges))
+                $changes = $sc->GetChangedFolderIds();
+            else
+                $changes = $fakechanges;
 
-                foreach ($changes as $folderid => $changecount) {
-                    if ($changecount > 0) {
-                        self::$encoder->startTag(SYNC_PING_FOLDER);
-                        self::$encoder->content($folderid);
-                        self::$encoder->endTag();
-                        if (empty($fakechanges))
-                            self::$topCollector->AnnounceInformation(sprintf("Found change in %s", $sc->GetCollection($folderid)->GetContentClass()), true);
-                    }
+            foreach ($changes as $folderid => $changecount) {
+                if ($changecount > 0) {
+                    self::$encoder->startTag(SYNC_PING_FOLDER);
+                    self::$encoder->content($folderid);
+                    self::$encoder->endTag();
+                    if (empty($fakechanges))
+                        self::$topCollector->AnnounceInformation(sprintf("Found change in %s", $sc->GetCollection($folderid)->GetContentClass()), true);
                 }
-                self::$encoder->endTag();
             }
+            self::$encoder->endTag();
         }
         self::$encoder->endTag();
 

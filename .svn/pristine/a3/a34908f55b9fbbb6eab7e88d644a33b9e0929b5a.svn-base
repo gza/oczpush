@@ -159,7 +159,7 @@ class SyncCollections implements Iterator {
 
         // if this is an additional folder the backend has to be setup correctly
         if ($checkPermissions === true && ! ZPush::GetBackend()->Setup(ZPush::GetAdditionalSyncFolderStore($spa->GetFolderId())))
-            throw new StatusException(sprintf("SyncCollections->LoadCollection(): could not Setup() the backend for folder id '%s'", $spa->GetFolderId()), self::ERROR_WRONG_HIERARCHY);
+            throw new StatusException(sprintf("HandleSync() could not Setup() the backend for folder id '%s'", $spa->GetFolderId()), self::ERROR_WRONG_HIERARCHY);
 
         // add collection to object
         $this->AddCollection($spa);
@@ -422,7 +422,7 @@ class SyncCollections implements Iterator {
 
         ZPush::GetTopCollector()->SetAsPushConnection();
         ZPush::GetTopCollector()->AnnounceInformation(sprintf("lifetime %ds", $lifetime), true);
-        ZLog::Write(LOGLEVEL_INFO, sprintf("SyncCollections->CheckForChanges(): Waiting for changes... (lifetime %d seconds)", $lifetime));
+        ZLog::Write(LOGLEVEL_INFO, sprintf("CheckForChanges(): Waiting for changes... (lifetime %d seconds)", $lifetime));
 
         // use changes sink where available
         $changesSink = false;
@@ -453,7 +453,7 @@ class SyncCollections implements Iterator {
 
             // Check if provisioning is necessary
             // if a PolicyKey was sent use it. If not, compare with the ReferencePolicyKey
-            if (PROVISIONING === true && $this->GetReferencePolicyKey() !== false && ZPush::GetDeviceManager()->ProvisioningRequired($this->GetReferencePolicyKey(), true))
+            if (PROVISIONING === true && ZPush::GetDeviceManager()->ProvisioningRequired($this->GetReferencePolicyKey(), true))
                 // the hierarchysync forces provisioning
                 throw new StatusException("SyncCollections->CheckForChanges(): PolicyKey changed. Provisioning required.", self::ERROR_WRONG_HIERARCHY);
 
@@ -469,7 +469,7 @@ class SyncCollections implements Iterator {
 
                 // more than 60 secs to go?
                 if (($now + 60) < $endat) {
-                    ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CheckForChanges(): Timeout forced after %ss from %ss due to other process", ($now-$started), $lifetime));
+                    ZLog::Write(LOGLEVEL_DEBUG, sprintf("CheckForChanges(): Timeout forced after %ss from %ss due to other process", ($now-$started), $lifetime));
                     ZPush::GetTopCollector()->AnnounceInformation(sprintf("Forced timeout after %ds", ($now-$started)), true);
                     return false;
                 }
@@ -481,7 +481,7 @@ class SyncCollections implements Iterator {
                 // every 5 minutes this is also done to see if there were "missed" notifications
                 if ($forceRealExport+300 <= $now) {
                     if ($this->CountChanges($onlyPingable)) {
-                        ZLog::Write(LOGLEVEL_DEBUG, "SyncCollections->CheckForChanges(): Using ChangesSink but found relevant changes on regular export");
+                        ZLog::Write(LOGLEVEL_DEBUG, "CheckForChanges(): Using ChangesSink but found relevant changes on regular export");
                         return true;
                     }
                     $forceRealExport = $now;
@@ -493,11 +493,11 @@ class SyncCollections implements Iterator {
                 foreach ($notifications as $folderid) {
                     // check if the notification on the folder is within our filter
                     if ($this->CountChange($folderid)) {
-                        ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CheckForChanges(): Notification received on folder '%s'", $folderid));
+                        ZLog::Write(LOGLEVEL_DEBUG, sprintf("CheckForChanges(): Notification received on folder '%s'", $folderid));
                         return true;
                     }
                     else {
-                        ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CheckForChanges(): Notification received on folder '%s', but it is not relevant", $folderid));
+                        ZLog::Write(LOGLEVEL_DEBUG, sprintf("CheckForChanges(): Notification received on folder '%s', but it is not relevant", $folderid));
                     }
                 }
             }
@@ -505,7 +505,7 @@ class SyncCollections implements Iterator {
             else {
                 ZPush::GetTopCollector()->AnnounceInformation(sprintf("Polling %d/%ds on %s", ($now-$started), $lifetime, $checkClasses));
                 if ($this->CountChanges($onlyPingable)) {
-                    ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CheckForChanges(): FOUND CHANGES", print_r($this->changes,1)));
+                    ZLog::Write(LOGLEVEL_DEBUG, sprintf("CheckForChanges(): FOUND CHANGES", print_r($this->changes,1)));
                     return true;
                 }
                 else {
@@ -513,7 +513,7 @@ class SyncCollections implements Iterator {
                 }
             } // end polling
         } // end wait for changes
-        ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CheckForChanges(): no changes found after %ds", time() - $started));
+        ZLog::Write(LOGLEVEL_DEBUG, sprintf("CheckForChanges(): no changes found after %ds", time() - $started));
 
         return false;
     }

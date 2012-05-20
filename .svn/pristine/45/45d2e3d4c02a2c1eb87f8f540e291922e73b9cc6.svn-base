@@ -1211,22 +1211,23 @@ class MAPIProvider {
 
 
         //set addresses
-        $this->setAddress("home", $contact->homecity, $contact->homecountry, $contact->homepostalcode, $contact->homestate, $contact->homestreet, $props, $contactprops);
-        $this->setAddress("business", $contact->businesscity, $contact->businesscountry, $contact->businesspostalcode, $contact->businessstate, $contact->businessstreet, $props, $contactprops);
-        $this->setAddress("other", $contact->othercity, $contact->othercountry, $contact->otherpostalcode, $contact->otherstate, $contact->otherstreet, $props, $contactprops);
+        $this->setAddress("home", u2w($contact->homecity), u2w($contact->homecountry), u2w($contact->homepostalcode), u2w($contact->homestate), u2w($contact->homestreet), $props, $contactprops);
+        $this->setAddress("business", u2w($contact->businesscity), u2w($contact->businesscountry), u2w($contact->businesspostalcode), u2w($contact->businessstate), u2w($contact->businessstreet), $props, $contactprops);
+        $this->setAddress("other", u2w($contact->othercity), u2w($contact->othercountry), u2w($contact->otherpostalcode), u2w($contact->otherstate), u2w($contact->otherstreet), $props, $contactprops);
 
+//TODO change mailing address handling
         //set the mailing address and its type
         if (isset($props[$contactprops["businessaddress"]])) {
             $props[$contactprops["mailingaddress"]] = 2;
-            $this->setMailingAddress($contact->businesscity, $contact->businesscountry, $contact->businesspostalcode, $contact->businessstate, $contact->businessstreet, $props[$contactprops["businessaddress"]], $props, $contactprops);
+            $this->setMailingAddress($props[$contactprops["businesscity"]], $props[$contactprops["businesscountry"]], $props[$contactprops["businesspostalcode"]], $props[$contactprops["businessstate"]], $props[$contactprops["businessstreet"]], $props[$contactprops["businessaddress"]], $props, $contactprops);
         }
         elseif (isset($props[$contactprops["homeaddress"]])) {
             $props[$contactprops["mailingaddress"]] = 1;
-            $this->setMailingAddress($contact->homecity, $contact->homecountry, $contact->homepostalcode, $contact->homestate, $contact->homestreet, $props[$contactprops["homeaddress"]], $props, $contactprops);
+            $this->setMailingAddress($props[$contactprops["homecity"]], $props[$contactprops["homecountry"]], $props[$contactprops["homepostalcode"]], $props[$contactprops["homestate"]], $props[$contactprops["homestreet"]], $props[$contactprops["homeaddress"]], $props, $contactprops);
         }
         elseif (isset($props[$contactprops["otheraddress"]])) {
             $props[$contactprops["mailingaddress"]] = 3;
-            $this->setMailingAddress($contact->othercity, $contact->othercountry, $contact->otherpostalcode, $contact->otherstate, $contact->otherstreet, $props[$contactprops["otheraddress"]], $props, $contactprops);
+            $this->setMailingAddress($props[$contactprops["othercity"]], $props[$contactprops["othercountry"]], $props[$contactprops["otherpostalcode"]], $props[$contactprops["otherstate"]], $props[$contactprops["otherstreet"]], $props[$contactprops["otheraddress"]], $props, $contactprops);
         }
 
         if (isset($contact->picture)) {
@@ -1890,16 +1891,16 @@ class MAPIProvider {
      * @access private
      * @return
      */
-     private function setAddress($type, &$city, &$country, &$postalcode, &$state, &$street, &$props, &$properties) {
-        if (isset($city)) $props[$properties[$type."city"]] = $city = u2w($city);
+     private function setAddress($type, $city, $country, $postalcode, $state, $street, &$props, &$properties) {
+        if (isset($city)) $props[$properties[$type."city"]] = $city;
 
-        if (isset($country)) $props[$properties[$type."country"]] = $country = u2w($country);
+        if (isset($country)) $props[$properties[$type."country"]] = $country;
 
-        if (isset($postalcode)) $props[$properties[$type."postalcode"]] = $postalcode = u2w($postalcode);
+        if (isset($postalcode)) $props[$properties[$type."postalcode"]] = $postalcode;
 
-        if (isset($state)) $props[$properties[$type."state"]] = $state = u2w($state);
+        if (isset($state)) $props[$properties[$type."state"]] = $state;
 
-        if (isset($street)) $props[$properties[$type."street"]] = $street = u2w($street);
+        if (isset($street)) $props[$properties[$type."street"]] = $street;
 
         //set composed address
         $address = Utils::BuildAddressString($street, $postalcode, $city, $state, $country);
