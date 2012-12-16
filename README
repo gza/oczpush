@@ -1,14 +1,14 @@
 oczupsh - ActiveSync for Owncloud
 
 Based on
-- z-push 2.0 beta's svn version
-   http://svn.berlios.de/svnroot/repos/z-push/branches/z-push-2
-- Owncloud's Head (should work on stable 3.0.1)
-   git://gitorious.org/owncloud/owncloud.git
+- z-push 2.0.6 stable's svn version
+   http://svn.berlios.de/svnroot/repos/z-push/release/2.0
+- Owncloud's (should work on stable 4.5.x)
+   http://owncloud.org/
 
 What works :
-- Contact sync (it seems that some badly formated vcard dont sync correctly)
-- Calendar sync ( with bugs : timezone problem and duplicates )
+- Contact sync
+- Calendar sync
 - Tasks untested (no UI on owncloud side)
 - Tested with Android Emulator 2.3.3 and 4.0
 - Reported to work on :
@@ -18,7 +18,7 @@ What works :
 
 Todo :
 - Fix VCARD format to V3.0
-- debug calendar/tasks
+- test tasks
 - mail/imap from owncloud's conf
 - Owncloud integration :
   - app
