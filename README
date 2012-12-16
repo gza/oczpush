@@ -29,7 +29,7 @@ Todo :
 
 Quick Install, debian/ubuntu style (thks to AlainB) :
 - checkout :
- cd /var/www ; git clone https://gza@github.com/gza/oczpush.git
+ cd /var/www ; git clone https://github.com/gza/oczpush.git
 
 - php parameters (I prefer put it in apache conf) + Apache conf
 
