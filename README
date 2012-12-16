@@ -42,8 +42,8 @@ Alias /Microsoft-Server-ActiveSync /var/www/oczpush/index.php
  </Directory>
 
 - dirs
-mkdir -p /var/log/z-push /var/lib/z-push /var/www/oczpush/
-chown www-data:www-data /var/log/z-push /var/lib/z-push
+mkdir -p /var/log/oczpush/ /var/lib/oczpush/ /var/www/oczpush/
+chown www-data:www-data /var/log/oczpush/ /var/lib/oczpush/ 
 
 - edit /var/www/oczpush/config.php
 define('OC_DIR', '/var/www/owncloud');

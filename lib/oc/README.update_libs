@@ -1,0 +1,7 @@
+To update libraries, use the following commands
+
+rm -rf rtfclass
+git clone --depth 1 https://github.com/mfn/rtfclass.git
+rm -rf iCalcreator
+git clone --depth 1 https://github.com/iCalcreator/iCalcreator
+

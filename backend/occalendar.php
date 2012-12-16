@@ -12,7 +12,7 @@ if (! defined('STORE_INTERNET_CPID') ) define('STORE_INTERNET_CPID', INTERNET_CP
 
 include_once('lib/default/diffbackend/diffbackend.php');
 include_once('lib/oc/z_RTF.php');
-include_once('lib/oc/class_ical_client.php');
+include_once('lib/oc/iCalcreator/iCalcreator.class.php');
 
 // OC4 fix
 if(isset($_SERVER['HTTPS']) and $_SERVER['HTTPS']<>'') $protocol='https://'; else $protocol='http://';
