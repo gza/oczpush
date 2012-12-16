@@ -17,6 +17,7 @@ include_once('lib/default/diffbackend/diffbackend.php');
 if(isset($_SERVER['HTTPS']) and $_SERVER['HTTPS']<>'') $protocol='https://'; else $protocol='http://';
 if(! isset($_SERVER['HTTP_REFERER'])) $_SERVER['HTTP_REFERER']=$protocol.$_SERVER['SERVER_NAME'].'/index.php';
 // End OC4 fix
+
 require_once(OC_DIR.'/lib/config.php');
 require_once(OC_DIR.'/lib/base.php');
 
@@ -26,6 +27,7 @@ OC_Util::checkAppEnabled('contacts');
 class BackendOCContacts extends BackendDiff {
     
     var $addressBookId;
+    var $userTZ;
 
     /**----------------------------------------------------------------------------------------------------------
      * default backend methods
@@ -52,6 +54,8 @@ class BackendOCContacts extends BackendDiff {
 	    $addressBooks = OC_Contacts_Addressbook::All($username);
 	    $this->addressBookId = $addressBooks[0]['id'];
      	    ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::Logon : addressBook selected :'.$addressBooks[0]['displayname']);
+	    $this->userTZ=\OCP\Config::getUserValue(\OCP\USER::getUser(), 'calendar', 'timezone', date_default_timezone_get());
+	    ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::Logon : TZ Selected: '.$this->userTZ);
 	    return true;
         }
         else {

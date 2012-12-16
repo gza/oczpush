@@ -18,6 +18,7 @@ include_once('lib/oc/iCalcreator/iCalcreator.class.php');
 if(isset($_SERVER['HTTPS']) and $_SERVER['HTTPS']<>'') $protocol='https://'; else $protocol='http://';
 if(! isset($_SERVER['HTTP_REFERER'])) $_SERVER['HTTP_REFERER']=$protocol.$_SERVER['SERVER_NAME'].'/index.php';
 // End OC4 fix
+
 require_once(OC_DIR.'/lib/config.php');
 require_once(OC_DIR.'/lib/base.php');
 
@@ -28,6 +29,7 @@ class BackendOCCalendar extends BackendDiff {
     
     var $calendarId;
     var $_currentTimezone = null;
+    var $userTZ;
 
     /**----------------------------------------------------------------------------------------------------------
      * default backend methods
@@ -51,9 +53,14 @@ class BackendOCCalendar extends BackendDiff {
         if(OC_User::login($username,$password)){
             OC_Util::setUpFS();
      	    ZLog::Write(LOGLEVEL_DEBUG, 'OCCalendar::Logon : Logged');
+	    
 	    $calendars = OC_Calendar_Calendar::allCalendars($username);
 	    $this->calendarId = $calendars[0]['id'];
      	    ZLog::Write(LOGLEVEL_DEBUG, 'OCCalendar::Logon : Calendar selected :'.$calendars[0]['displayname']);
+	    
+	    $this->userTZ=\OCP\Config::getUserValue(\OCP\USER::getUser(), 'calendar', 'timezone', date_default_timezone_get());
+	    ZLog::Write(LOGLEVEL_DEBUG, 'OCCalendar::Logon : TZ Selected: '.$this->userTZ);
+
 	    return true;
         }
         else {
@@ -314,9 +321,14 @@ class BackendOCCalendar extends BackendDiff {
         }
 
         if ($vtimezone = $v->getComponent( 'vtimezone' )) {
-            $message = $this->setoutlooktimezone($message, $vtimezone);
+		$tz = TimezoneUtil::GetFullTZ($vtimezone);
+	} else {
+		// Use Owncloud default user timezone
+		$tz = TimezoneUtil::GetFullTZ($this->userTZ);
         } 
-//	ZLog::Write(LOGLEVEL_DEBUG, 'OCCalendar::GetMessage: $message = ('.print_r($message,true));
+	$message->timezone = base64_encode($this->getSyncBlobFromTZ($tz));
+	
+	ZLog::Write(LOGLEVEL_DEBUG, 'OCCalendar::GetMessage: '.date_default_timezone_get().' $message = ('.print_r($message,true));
 	if ($message->Check())
         	return $message;
     }
@@ -364,6 +376,8 @@ class BackendOCCalendar extends BackendDiff {
      */
     public function ChangeMessage($folderid, $id, $message) {
         ZLog::Write(LOGLEVEL_DEBUG, 'OCCalendar::ChangeMessage('.$folderid.', '.$id.', ..)');
+
+	ZLog::Write(LOGLEVEL_DEBUG, 'OCCalendar::ChangeMessage: $message = ('.print_r($message,true));
 
 	$new = false;
 
@@ -638,11 +652,6 @@ class BackendOCCalendar extends BackendDiff {
         return $data;
     }
     
-    private function setoutlooktimezone($message, $vtimezone) {
-        $message->timezone = $this->getTimezoneString($this->_currentTimezone);
-        return $message;
-    }
-
     private function getdeletedexceptionobject($val) {
         $rtn = new SyncAppointment();
         $rtn->deleted = "1";
@@ -820,7 +829,7 @@ class BackendOCCalendar extends BackendDiff {
                     // convert to date
                     if (is_array($val)) {
                         if (!empty($val['TZID'])) {
-                            $message->timezone = $this->getTimezoneString($val['TZID']);
+                            $message->timezone = base64_encode($this->getSyncBlobFromTZ(TimezoneUtil::GetFullTZ($val['TZID'])));
                         }
                         $val = $this->makeGMTTime($val);
                     } else {
@@ -873,7 +882,7 @@ class BackendOCCalendar extends BackendDiff {
                 if ($e[1] == 11) {
                     if (is_array($val)) {
                         if (!empty($val['TZID'])) {
-                            $message->timezone = $this->getTimezoneString($val['TZID']);
+                            $message->timezone = base64_encode($this->getSyncBlobFromTZ(TimezoneUtil::GetFullTZ($val['TZID'])));
                         }
                         $val = $this->makeGMTTime($val);
                     } else {
@@ -1080,7 +1089,7 @@ class BackendOCCalendar extends BackendDiff {
    
     function makeGMTTime($val)
     {
-        $tz = timezone_open('GMT');
+        $tz = timezone_open($this->userTZ);
         if (!empty($val['TZID'])) {
             $tz = timezone_open($val['TZID']);
         }
@@ -1100,101 +1109,7 @@ class BackendOCCalendar extends BackendDiff {
         return date_timestamp_get($date);
     }
 
-    // This returns a timezone that matches the timezonestring.
-    // We can't be sure this is the one you chose, as multiple timezones have same timezonestring
-    function getTimezoneFromString($tz_string)
-    {
-        //Get a list of all timezones
-        $identifiers = DateTimeZone::listIdentifiers();
-        //Try the default timezone first
-        array_unshift($identifiers, date_default_timezone_get());
-        foreach ($identifiers as $tz)
-        {
-            $str = $this->getTimezoneString($tz, false);
-            if ($str == $tz_string)
-            {
-                ZLog::Write(LOGLEVEL_DEBUG,"getTimezoneFromString: timezone is " . $tz);
-                return $tz;
-            }
-        }
-        return date_default_timezone_get();
-    }
-
-    function getTimezoneString($timezone, $with_names = true)
-    {
-        // UTC needs special handling
-        if ($timezone == "UTC")
-            return base64_encode(pack('la64vvvvvvvvla64vvvvvvvvl', 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        try {
-            //Generate a timezone string (PHP 5.3 needed for this)
-            ZLog::Write(LOGLEVEL_DEBUG,"getTimezoneString: Generating timezone base64");
-            $timezone = new DateTimeZone($timezone);
-            $trans = $timezone->getTransitions(time());
-            $stdTime = null;
-            $dstTime = null;
-            if (count($trans) < 3)
-            {
-                throw new Exception();
-            }
-            if ($trans[1]['isdst'] == 1)
-            {
-                $dstTime = $trans[1];
-                $stdTime = $trans[2];
-            }
-            else
-            {
-                $dstTime = $trans[2];
-                $stdTime = $trans[1];
-            }
-            $stdTimeO = new DateTime($stdTime['time']);
-            $stdFirst = new DateTime(sprintf("first sun of %s %s", $stdTimeO->format('F'), $stdTimeO->format('Y')));
-            $stdInterval = $stdTimeO->diff($stdFirst);
-            $stdDays = $stdInterval->format('%d');
-            $stdBias = $stdTime['offset'] / -60;
-            $stdName = $stdTime['abbr'];
-            $stdYear = 0;
-            $stdMonth = $stdTimeO->format('n');
-            $stdWeek = floor($stdDays/7)+1;
-            $stdDay = $stdDays%7;
-            $stdHour = $stdTimeO->format('H');
-            $stdMinute = $stdTimeO->format('i');
-            $stdTimeO->add(new DateInterval('P7D'));
-            if ($stdTimeO->format('n') != $stdMonth)
-            {
-                $stdWeek = 5;
-            }
-            $dstTimeO = new DateTime($dstTime['time']);
-            $dstFirst = new DateTime(sprintf("first sun of %s %s", $dstTimeO->format('F'), $dstTimeO->format('Y')));
-            $dstInterval = $dstTimeO->diff($dstFirst);
-            $dstDays = $dstInterval->format('%d');
-            $dstName = $dstTime['abbr'];
-            $dstYear = 0;
-            $dstMonth = $dstTimeO->format('n');
-            $dstWeek = floor($dstDays/7)+1;
-            $dstDay = $dstDays%7;
-            $dstHour = $dstTimeO->format('H');
-            $dstMinute = $dstTimeO->format('i');
-            if ($dstTimeO->format('n') != $dstMonth)
-            {
-                $dstWeek = 5;
-            }
-            $dstBias = ($dstTime['offset'] - $stdTime['offset']) / -60;
-            if ($with_names)
-            {
-                return base64_encode(pack('la64vvvvvvvvla64vvvvvvvvl', $stdBias, $stdName, 0, $stdMonth, $stdDay, $stdWeek, $stdHour, $stdMinute, 0, 0, 0, $dstName, 0, $dstMonth, $dstDay, $dstWeek, $dstHour, $dstMinute, 0, 0, $dstBias));
-            }
-            else
-            {
-                return base64_encode(pack('la64vvvvvvvvla64vvvvvvvvl', $stdBias, '', 0, $stdMonth, $stdDay, $stdWeek, $stdHour, $stdMinute, 0, 0, 0, '', 0, $dstMonth, $dstDay, $dstWeek, $dstHour, $dstMinute, 0, 0, $dstBias));
-            }
-        }
-        catch (Exception $e) {
-            // If invalid timezone is given, we return UTC
-            return base64_encode(pack('la64vvvvvvvvla64vvvvvvvvl', 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        }
-        return base64_encode(pack('la64vvvvvvvvla64vvvvvvvvl', 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0));
-    }
-    
+   
     function converttovevent($message) {
     
         ZLog::Write(LOGLEVEL_DEBUG,'CalDAV:: About to create new event.');
@@ -1203,7 +1118,7 @@ class BackendOCCalendar extends BackendDiff {
       
         if (isset($message->timezone))
         {
-            $this->_currentTimezone = $this->getTimezoneFromString($message->timezone);
+            $this->_currentTimezone = $this->getTZFromSyncBlob(base64_decode($message->timezone));
         }
 
         $allday = false;
@@ -1476,5 +1391,47 @@ class BackendOCCalendar extends BackendDiff {
         }
         return $icalcomponent;
     }
+
+    /**
+     * Pack timezone info for Sync
+     *
+     * @param array     $tz
+     *
+     * @access private
+     * @return string
+     */
+    private function getSyncBlobFromTZ($tz) {
+        // set the correct TZ name (done using the Bias)
+        if (!isset($tz["tzname"]) || !$tz["tzname"] || !isset($tz["tznamedst"]) || !$tz["tznamedst"])
+            $tz = TimezoneUtil::FillTZNames($tz);
+
+        $packed = pack("la64vvvvvvvv" . "la64vvvvvvvv" . "l",
+                $tz["bias"], $tz["tzname"], 0, $tz["dstendmonth"], $tz["dstendday"], $tz["dstendweek"], $tz["dstendhour"], $tz["dstendminute"], $tz["dstendsecond"], $tz["dstendmillis"],
+                $tz["stdbias"], $tz["tznamedst"], 0, $tz["dststartmonth"], $tz["dststartday"], $tz["dststartweek"], $tz["dststarthour"], $tz["dststartminute"], $tz["dststartsecond"], $tz["dststartmillis"],
+                $tz["dstbias"]);
+
+        return $packed;
+    }
+
+    /**
+     * Unpack timezone info from Sync
+     *
+     * @param string    $data
+     *
+     * @access private
+     * @return array
+     */
+    private function getTZFromSyncBlob($data) {
+        $tz = unpack(   "lbias/a64tzname/vdstendyear/vdstendmonth/vdstendday/vdstendweek/vdstendhour/vdstendminute/vdstendsecond/vdstendmillis/" .
+                        "lstdbias/a64tznamedst/vdststartyear/vdststartmonth/vdststartday/vdststartweek/vdststarthour/vdststartminute/vdststartsecond/vdststartmillis/" .
+                        "ldstbias", $data);
+
+        // Make the structure compatible with class.recurrence.php
+        $tz["timezone"] = $tz["bias"];
+        $tz["timezonedst"] = $tz["dstbias"];
+
+        return $tz;
+    }
+
 };
 ?>
