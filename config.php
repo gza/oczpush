@@ -6,7 +6,7 @@
 *
 * Created   :   01.10.2007
 *
-* Copyright 2007 - 2010 Zarafa Deutschland GmbH
+* Copyright 2007 - 2012 Zarafa Deutschland GmbH
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License, version 3,
@@ -53,8 +53,8 @@
     // Try to set unlimited timeout
     define('SCRIPT_TIMEOUT', 0);
 
-    //Max size of attachments to display inline. Default is 1MB
-    define('MAX_EMBEDDED_SIZE', 1048576);
+    //Max size of attachments to display inline. Default is 2 MB
+    define('MAX_EMBEDDED_SIZE', 2097152);
 
 
 /**********************************************************************************
@@ -65,6 +65,20 @@
 
 /**********************************************************************************
  *  Logging settings
+ *  Possible LOGLEVEL and LOGUSERLEVEL values are:
+ *  LOGLEVEL_OFF            - no logging
+ *  LOGLEVEL_FATAL          - log only critical errors
+ *  LOGLEVEL_ERROR          - logs events which might require corrective actions
+ *  LOGLEVEL_WARN           - might lead to an error or require corrective actions in the future
+ *  LOGLEVEL_INFO           - usually completed actions
+ *  LOGLEVEL_DEBUG          - debugging information, typically only meaningful to developers
+ *  LOGLEVEL_WBXML          - also prints the WBXML sent to/from the device
+ *  LOGLEVEL_DEVICEID       - also prints the device id for every log entry
+ *  LOGLEVEL_WBXMLSTACK     - also prints the contents of WBXML stack
+ *
+ *  The verbosity increases from top to bottom. More verbose levels include less verbose
+ *  ones, e.g. setting to LOGLEVEL_DEBUG will also output LOGLEVEL_FATAL, LOGLEVEL_ERROR,
+ *  LOGLEVEL_WARN and LOGLEVEL_INFO level entries.
  */
     define('LOGFILEDIR', '/var/log/z-push/');
     define('LOGFILE', LOGFILEDIR . 'z-push.log');
@@ -75,7 +89,7 @@
 
     // To save e.g. WBXML data only for selected users, add the usernames to the array
     // The data will be saved into a dedicated file per user in the LOGFILEDIR
-    define('LOGUSERLEVEL', LOGLEVEL_WBXML);
+    define('LOGUSERLEVEL', LOGLEVEL_DEVICEID);
     $specialLogUsers = array();
 
 
@@ -113,6 +127,35 @@
     // a higher value if you have a high load on the server.
     define('PING_INTERVAL', 30);
 
+    // Interval in seconds to force a re-check of potentially missed notifications when
+    // using a changes sink. Default are 300 seconds (every 5 min).
+    // This can also be disabled by setting it to false
+    define('SINK_FORCERECHECK', 300);
+
+    // Set the fileas (save as) order for contacts in the webaccess/webapp/outlook.
+    // It will only affect new/modified contacts on the mobile which then are synced to the server.
+    // Possible values are:
+    // SYNC_FILEAS_FIRSTLAST    - fileas will be "Firstname Middlename Lastname"
+    // SYNC_FILEAS_LASTFIRST    - fileas will be "Lastname, Firstname Middlename"
+    // SYNC_FILEAS_COMPANYONLY  - fileas will be "Company"
+    // SYNC_FILEAS_COMPANYLAST  - fileas will be "Company (Lastname, Firstname Middlename)"
+    // SYNC_FILEAS_COMPANYFIRST - fileas will be "Company (Firstname Middlename Lastname)"
+    // SYNC_FILEAS_LASTCOMPANY  - fileas will be "Lastname, Firstname Middlename (Company)"
+    // SYNC_FILEAS_FIRSTCOMPANY - fileas will be "Firstname Middlename Lastname (Company)"
+    // The company-fileas will only be set if a contact has a company set. If one of
+    // company-fileas is selected and a contact doesn't have a company set, it will default
+    // to SYNC_FILEAS_FIRSTLAST or SYNC_FILEAS_LASTFIRST (depending on if last or first
+    // option is selected for company).
+    // If SYNC_FILEAS_COMPANYONLY is selected and company of the contact is not set
+    // SYNC_FILEAS_LASTFIRST will be used
+    define('FILEAS_ORDER', SYNC_FILEAS_LASTFIRST);
+
+    // Amount of items to be synchronized per request
+    // Normally this value is requested by the mobile. Common values are 5, 25, 50 or 100.
+    // Exporting too much items can cause mobile timeout on busy systems.
+    // Z-Push will use the lowest value, either set here or by the mobile.
+    // default: 100 - value used if mobile does not limit amount of items
+    define('SYNC_MAX_ITEMS', 100);
 
 /**********************************************************************************
  *  Backend settings
@@ -148,6 +191,11 @@
     define('IMAP_INLINE_FORWARD', false);
     // use imap_mail() to send emails (default) - if false mail() is used
     define('IMAP_USE_IMAPMAIL', true);
+    /* BEGIN fmbiete's contribution r1527, ZP-319 */
+    // list of folders we want to exclude from sync. Names, or part of it, separated by |
+    // example: dovecot.sieve|archive|spam
+    define('IMAP_EXCLUDED_FOLDERS', '');
+    /* END fmbiete's contribution r1527, ZP-319 */
 
 
     // ************************
@@ -164,7 +212,7 @@
     // **********************
     //  BackendOCCombined settings
     // **********************
-    define('OC_DIR', '/var/www/localhost/htdocs/ocdev/owncloud');
+    define('OC_DIR', '/var/www/localhost/htdocs/owncloud');
     // uncomment if you want to use a mail backend BackendMaildir -> m, BackendIMAP -> i
     // define('OC_MAIL', 'i');
 

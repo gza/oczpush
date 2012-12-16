@@ -269,8 +269,13 @@ class BackendOCCombined extends Backend {
      */
     function GetWasteBasket(){
         ZLog::Write(LOGLEVEL_DEBUG, "OCCombined->GetWasteBasket()");
-        if (isset($this->activeBackend))
-            return $this->activeBackend->GetWasteBasket();
+
+        if (isset($this->activeBackend)) {
+            if (!$this->activeBackend->GetWasteBasket())
+                return false;
+            else
+                return $this->activeBackendID . $this->config['delimiter'] . $this->activeBackend->GetWasteBasket();
+        }
 
         return false;
     }
@@ -335,6 +340,7 @@ class BackendOCCombined extends Backend {
             return false;
 
         $this->activeBackend = $this->backends[$id];
+        $this->activeBackendID = $id;
         return $this->backends[$id];
     }
 
