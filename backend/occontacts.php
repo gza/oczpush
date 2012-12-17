@@ -453,10 +453,12 @@ class BackendOCContacts extends BackendDiff {
             $message->webpage = w2ui($vcard['url'][0]['val'][0]);
         if(!empty($vcard['categories'][0]['val']))
             $message->categories = $vcard['categories'][0]['val'];
-
-        if(!empty($vcard['photo'][0]['val'][0]))
-            $message->picture = base64_encode($vcard['photo'][0]['val'][0]);
-//	ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::GetMessage: $message = ('.print_r($message,true));
+        if(!empty($vcard['photo'][0]['val'][0])) {
+		$b64=base64_encode($vcard['photo'][0]['val'][0]);
+		if (strlen($b64) < 49152) //Value from lib/syncobjects/synccontact.php:177 different from 
+			$message->picture = $b64;
+	}
+	ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::GetMessage: $message = ('.print_r($message,true));
         return $message;
     }
 
