@@ -300,6 +300,12 @@ class BackendOCContacts extends BackendDiff {
                     }else{
                         $fieldvalue[strtolower($matches[1])] = preg_split('/(?<!\\\\)(\,)/i', $matches[2], -1, PREG_SPLIT_NO_EMPTY);
                     }
+
+					if (strtolower($matches[1]) == "type") {
+						foreach ($fieldvalue["type"] as &$tmp) {
+							$tmp = strtolower($tmp);
+						}
+					}
                 }else{
                     if(!isset($types[strtolower($fieldpart)]))
                         continue;
