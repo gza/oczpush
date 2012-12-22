@@ -350,12 +350,20 @@ class BackendOCContacts extends BackendDiff {
 	
 //	ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::GetMessage: $vcard = ('.print_r($vcard,true));
         
-	if(isset($vcard['email'][0]['val'][0]))
-            $message->email1address = $vcard['email'][0]['val'][0];
-        if(isset($vcard['email'][1]['val'][0]))
-            $message->email2address = $vcard['email'][1]['val'][0];
-        if(isset($vcard['email'][2]['val'][0]))
-            $message->email3address = $vcard['email'][2]['val'][0];
+		if(isset($vcard['email'])) {
+			foreach($vcard['email'] as $email) {
+				if(!isset($tel['type'])) {
+					$tel['type'] = array();
+				}
+				if(in_array('home', $email['type'])) {
+					$message->email1address = $email['val'][0];
+				} elseif(in_array('work', $email['type'])) {
+					$message->email2address = $email['val'][0];
+				} else {
+					$message->email3address = $email['val'][0];
+				}
+			}
+		}
 
         if(isset($vcard['tel'])){
             foreach($vcard['tel'] as $tel) {
