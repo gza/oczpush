@@ -541,39 +541,10 @@ class BackendOCContacts extends BackendDiff {
             'jobtitle' => 'ROLE',
             'webpage' => 'URL',
         );
-        $data = "BEGIN:VCARD\nVERSION:2.1\nPRODID:Z-Push\n";
-        foreach($mapping as $k => $v){
-            $val = '';
-            $ks = explode(';', $k);
-	    foreach($ks as $i){
-                if(!empty($message->$i))
-		{
-			
-	    	ZLog::Write(LOGLEVEL_DEBUG,"\$message->\$i=".$message->$i);
-                    $val .= $this->escape($message->$i);
-		}
-                $val.=';';
-            }
-            if(preg_match('/^[;]*$/',$val))
-                continue;
-	    ZLog::Write(LOGLEVEL_DEBUG,"\$val=$val");
-            $val = substr($val,0,-1);
-            if(strlen($val)>50){
-                $data .= $v.":\n\t".substr(chunk_split($val, 50, "\n\t"), 0, -1);
-            }else{
-                $data .= $v.':'.$val."\n";
-            }
-        }
-        if(!empty($message->categories))
-            $data .= 'CATEGORIES:'.implode(',', $this->escape($message->categories))."\n";
-        if(!empty($message->picture))
-            $data .= 'PHOTO;ENCODING=BASE64;TYPE=JPEG:'."\n\t".substr(chunk_split($message->picture, 50, "\n\t"), 0, -1);
-        if(isset($message->birthday))
-            $data .= 'BDAY:'.date('Y-m-d', $message->birthday)."\n";
 
-// not supported: anniversary, assistantname, assistnamephonenumber, children, department, officelocation, radiophonenumber, spouse, rtf
-
-        if(!$id){
+	$oldNote = "";
+	$hasNote = false;
+	if(!$id){
 		$newvcard = true;
 		$id = substr(md5(rand().time()),0,10);
 		ZLog::Write(LOGLEVEL_DEBUG, 'id: $id');
@@ -583,7 +554,75 @@ class BackendOCContacts extends BackendDiff {
 //		}
 	} else {
 		$newvcard = false;
-	};
+
+		$card = OC_Contacts_VCard::findWhereDAVDataIs($this->addressBookId, $id.'.vcf');
+		$data = $card['carddata'];
+		$data = str_replace("\x00", '', $data);
+		$data = str_replace("\r\n", "\n", $data);
+		$data = str_replace("\r", "\n", $data);
+		$data = preg_replace('/(\n)([ \t])/i', '', $data);
+		$lines = explode("\n", $data);
+
+		foreach($lines as $line) {
+		    if (trim($line) == '')
+			continue;
+		    $pos = strpos($line, ':');
+		    if ($pos === false)
+			continue;
+		    $field = trim(substr($line, 0, $pos));
+		    $value = trim(substr($line, $pos+1));
+
+		    if (strtolower($field) === "note") {
+			$oldNote = $value;
+			ZLog::Write(LOGLEVEL_DEBUG, "Old note: " . $oldNote);
+			break;
+		    }
+
+		}
+	}
+
+        $data = "BEGIN:VCARD\nVERSION:2.1\nPRODID:Z-Push\n";
+        foreach($mapping as $k => $v){
+            $val = '';
+            $ks = explode(';', $k);
+	    foreach($ks as $i){
+                if(!empty($message->$i))
+		{
+			
+		    ZLog::Write(LOGLEVEL_DEBUG,"\$message->\$i=".$message->$i);
+                    $val .= $this->escape($message->$i);
+		}
+                $val.=';';
+	    
+		if ($i === 'body' && isset($message->$i))
+		    $hasNote = true;
+            }
+	    
+	    if(preg_match('/^[;]*$/',$val))
+		continue;
+
+	    ZLog::Write(LOGLEVEL_DEBUG,"\$val=$val");
+            $val = substr($val,0,-1);
+            if(strlen($val)>50){
+                $data .= $v.":\n\t".substr(chunk_split($val, 50, "\n\t"), 0, -1);
+            }else{
+                $data .= $v.':'.$val."\n";
+	    }
+        }
+        if(!empty($message->categories))
+            $data .= 'CATEGORIES:'.implode(',', $this->escape($message->categories))."\n";
+        if(!empty($message->picture))
+            $data .= 'PHOTO;ENCODING=BASE64;TYPE=JPEG:'."\n\t".substr(chunk_split($message->picture, 50, "\n\t"), 0, -1);
+        if(isset($message->birthday))
+	    $data .= 'BDAY:'.date('Y-m-d', $message->birthday)."\n";
+	if(!$hasNote) {
+	    ZLog::Write(LOGLEVEL_DEBUG, "Keeping old note");
+	    $data .= 'NOTE:'.$oldNote."\n";
+	} else {
+	    ZLog::Write(LOGLEVEL_DEBUG, "Using new note");
+	}
+
+// not supported: anniversary, assistantname, assistnamephonenumber, children, department, officelocation, radiophonenumber, spouse, rtf
 	$data .= "UID:$id\n";
 	$data .= "END:VCARD";
 
