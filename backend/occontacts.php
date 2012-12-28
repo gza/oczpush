@@ -454,9 +454,11 @@ class BackendOCContacts extends BackendDiff {
         if(!empty($vcard['categories'][0]['val']))
             $message->categories = $vcard['categories'][0]['val'];
         if(!empty($vcard['photo'][0]['val'][0])) {
-		$b64=base64_encode($vcard['photo'][0]['val'][0]);
-		if (strlen($b64) < 49152) //Value from lib/syncobjects/synccontact.php:177 different from 
-			$message->picture = $b64;
+		if ( $b64picture = $this->jpegWithSize($vcard['photo'][0]['val'][0], 49152)) { //49152 Value from lib/syncobjects/synccontact.php:177
+			$message->picture=$b64picture;
+		} else {
+			ZLog::Write(LOGLEVEL_ERROR, 'OCContacts::GetMessage: enable to initiate OC_Image object for contact');
+		}
 	}
 	ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::GetMessage: $message = ('.print_r($message,true));
         return $message;
@@ -668,5 +670,62 @@ class BackendOCContacts extends BackendDiff {
         $data = str_replace(array('\\\\', '\\;', '\\,', '\\n','\\N'),array('\\', ';', ',', "\n", "\n"),$data);
         return $data;
     }
+
+    /**
+     * resize an image to fit in a limited weight
+     *
+     * @param string	          $picture         image string (png, jpeg, etc..)
+     * @param integer		  $maxSize         maximum weight in octets
+     * @param float		  $stepsize	   after first resize try, iterate at this stepsize until good
+     *
+     * @access private
+     * @return string		  $b64		   base64 encoded image
+     */
+
+    function jpegWithSize($picture,$maxSize,$stepsize=0.25) {
+    	$image=new OC_Image($picture);
+	$b64=base64_encode($this->gd2jpeg($image));
+	ZLog::Write(LOGLEVEL_DEBUG, 'jpegWithSize : start with curSize: '.strlen($b64).' o / '.$maxSize.' o');
+        if (strlen($b64) > $maxSize) {
+                ZLog::Write(LOGLEVEL_DEBUG, 'jpegWithSize : curSize: '.strlen($b64).' o >'.$maxSize.' o');
+                $b64=$this->gd2jpeg($image,$maxSize/strlen($b64));
+                $i=0;
+                while (strlen($b64) > $maxSize and $i<10) {
+                        $i++;
+                        $b64=$this->gd2jpeg($image,$stepsize);
+                        ZLog::Write(LOGLEVEL_DEBUG, 'jpegWithSize : curSize: '.strlen($b64).' o >'.$maxSize.' o');
+                }
+                if (strlen($b64) > $maxSize) {
+                        ZLog::Write(LOGLEVEL_WARN, 'jpegWithSize : not in bounds after '.$i.' sizes !!!! bizarre...');
+                        return null;
+                }
+        }
+	ZLog::Write(LOGLEVEL_DEBUG, 'jpegWithSize : return with curSize: '.strlen($b64).' o / '.$maxSize.' o');
+        return $b64;
+     }
+
+
+    /**
+     * convert image from gd to jpeg string (optionaly with resize by ratio)
+     *
+     * @param gd ressource        $image           image to be converted
+     * @param float		  $ratio	   resize factor
+     *
+     * @return string                              jpeg image (base64 encoded)
+     */
+
+     function gd2jpeg(& $image,$ratio = 1) {
+     	if ( $ratio != 1 ) {
+	        $maxPix=max(imageSX($image->resource()),imageSY($image->resource()));
+		$image->resize($maxPix*$ratio);
+	}
+	ob_start();
+	$res = imagejpeg($image->resource());
+        if (!$res) {
+        	ZLog::Write(LOGLEVEL_DEBUG, 'gd2jpeg : Error getting image data.');
+        }
+        return base64_encode(ob_get_clean());
+     }
+
 };
 ?>
