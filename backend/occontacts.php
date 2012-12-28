@@ -300,6 +300,12 @@ class BackendOCContacts extends BackendDiff {
                     }else{
                         $fieldvalue[strtolower($matches[1])] = preg_split('/(?<!\\\\)(\,)/i', $matches[2], -1, PREG_SPLIT_NO_EMPTY);
                     }
+
+					if (strtolower($matches[1]) == "type") {
+						foreach ($fieldvalue["type"] as &$tmp) {
+							$tmp = strtolower($tmp);
+						}
+					}
                 }else{
                     if(!isset($types[strtolower($fieldpart)]))
                         continue;
@@ -344,12 +350,20 @@ class BackendOCContacts extends BackendDiff {
 	
 //	ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::GetMessage: $vcard = ('.print_r($vcard,true));
         
-	if(isset($vcard['email'][0]['val'][0]))
-            $message->email1address = $vcard['email'][0]['val'][0];
-        if(isset($vcard['email'][1]['val'][0]))
-            $message->email2address = $vcard['email'][1]['val'][0];
-        if(isset($vcard['email'][2]['val'][0]))
-            $message->email3address = $vcard['email'][2]['val'][0];
+		if(isset($vcard['email'])) {
+			foreach($vcard['email'] as $email) {
+				if(!isset($tel['type'])) {
+					$tel['type'] = array();
+				}
+				if(in_array('home', $email['type'])) {
+					$message->email1address = $email['val'][0];
+				} elseif(in_array('work', $email['type'])) {
+					$message->email2address = $email['val'][0];
+				} else {
+					$message->email3address = $email['val'][0];
+				}
+			}
+		}
 
         if(isset($vcard['tel'])){
             foreach($vcard['tel'] as $tel) {
@@ -509,59 +523,30 @@ class BackendOCContacts extends BackendDiff {
         $mapping = array(
             'fileas' => 'FN',
             'lastname;firstname;middlename;title;suffix' => 'N',
-            'email1address' => 'EMAIL;INTERNET',
-            'email2address' => 'EMAIL;INTERNET',
-            'email3address' => 'EMAIL;INTERNET',
-            'businessphonenumber' => 'TEL;WORK',
-            'business2phonenumber' => 'TEL;WORK',
-            'businessfaxnumber' => 'TEL;WORK;FAX',
-            'homephonenumber' => 'TEL;HOME',
-            'home2phonenumber' => 'TEL;HOME',
-            'homefaxnumber' => 'TEL;HOME;FAX',
-            'mobilephonenumber' => 'TEL;CELL',
-            'carphonenumber' => 'TEL;CAR',
-            'pagernumber' => 'TEL;PAGER',
-            ';;businessstreet;businesscity;businessstate;businesspostalcode;businesscountry' => 'ADR;WORK',
-            ';;homestreet;homecity;homestate;homepostalcode;homecountry' => 'ADR;HOME',
+            'email1address' => 'EMAIL;TYPE=INTERNET;TYPE=HOME',
+            'email2address' => 'EMAIL;TYPE=INTERNET;TYPE=WORK',
+            'email3address' => 'EMAIL;TYPE=INTERNET',
+            'businessphonenumber' => 'TEL;TYPE=WORK',
+            'business2phonenumber' => 'TEL;TYPE=WORK',
+            'businessfaxnumber' => 'TEL;TYPE=WORK;TYPE=FAX',
+            'homephonenumber' => 'TEL;TYPE=HOME',
+            'home2phonenumber' => 'TEL;TYPE=HOME',
+            'homefaxnumber' => 'TEL;TYPE=HOME;TYPE=FAX',
+            'mobilephonenumber' => 'TEL;TYPE=CELL',
+            'carphonenumber' => 'TEL;TYPE=CAR',
+            'pagernumber' => 'TEL;TYPE=PAGER',
+            ';;businessstreet;businesscity;businessstate;businesspostalcode;businesscountry' => 'ADR;TYPE=WORK',
+            ';;homestreet;homecity;homestate;homepostalcode;homecountry' => 'ADR;TYPE=HOME',
             ';;otherstreet;othercity;otherstate;otherpostalcode;othercountry' => 'ADR',
             'companyname' => 'ORG',
             'body' => 'NOTE',
             'jobtitle' => 'ROLE',
             'webpage' => 'URL',
         );
-        $data = "BEGIN:VCARD\nVERSION:2.1\nPRODID:Z-Push\n";
-        foreach($mapping as $k => $v){
-            $val = '';
-            $ks = explode(';', $k);
-	    foreach($ks as $i){
-                if(!empty($message->$i))
-		{
-			
-	    	ZLog::Write(LOGLEVEL_DEBUG,"\$message->\$i=".$message->$i);
-                    $val .= $this->escape($message->$i);
-		}
-                $val.=';';
-            }
-            if(preg_match('/^[;]*$/',$val))
-                continue;
-	    ZLog::Write(LOGLEVEL_DEBUG,"\$val=$val");
-            $val = substr($val,0,-1);
-            if(strlen($val)>50){
-                $data .= $v.":\n\t".substr(chunk_split($val, 50, "\n\t"), 0, -1);
-            }else{
-                $data .= $v.':'.$val."\n";
-            }
-        }
-        if(!empty($message->categories))
-            $data .= 'CATEGORIES:'.implode(',', $this->escape($message->categories))."\n";
-        if(!empty($message->picture))
-            $data .= 'PHOTO;ENCODING=BASE64;TYPE=JPEG:'."\n\t".substr(chunk_split($message->picture, 50, "\n\t"), 0, -1);
-        if(isset($message->birthday))
-            $data .= 'BDAY:'.date('Y-m-d', $message->birthday)."\n";
 
-// not supported: anniversary, assistantname, assistnamephonenumber, children, department, officelocation, radiophonenumber, spouse, rtf
-
-        if(!$id){
+	$oldNote = "";
+	$hasNote = false;
+	if(!$id){
 		$newvcard = true;
 		$id = substr(md5(rand().time()),0,10);
 		ZLog::Write(LOGLEVEL_DEBUG, 'id: $id');
@@ -571,7 +556,75 @@ class BackendOCContacts extends BackendDiff {
 //		}
 	} else {
 		$newvcard = false;
-	};
+
+		$card = OC_Contacts_VCard::findWhereDAVDataIs($this->addressBookId, $id.'.vcf');
+		$data = $card['carddata'];
+		$data = str_replace("\x00", '', $data);
+		$data = str_replace("\r\n", "\n", $data);
+		$data = str_replace("\r", "\n", $data);
+		$data = preg_replace('/(\n)([ \t])/i', '', $data);
+		$lines = explode("\n", $data);
+
+		foreach($lines as $line) {
+		    if (trim($line) == '')
+			continue;
+		    $pos = strpos($line, ':');
+		    if ($pos === false)
+			continue;
+		    $field = trim(substr($line, 0, $pos));
+		    $value = trim(substr($line, $pos+1));
+
+		    if (strtolower($field) === "note") {
+			$oldNote = $value;
+			ZLog::Write(LOGLEVEL_DEBUG, "Old note: " . $oldNote);
+			break;
+		    }
+
+		}
+	}
+
+        $data = "BEGIN:VCARD\nVERSION:2.1\nPRODID:Z-Push\n";
+        foreach($mapping as $k => $v){
+            $val = '';
+            $ks = explode(';', $k);
+	    foreach($ks as $i){
+                if(!empty($message->$i))
+		{
+			
+		    ZLog::Write(LOGLEVEL_DEBUG,"\$message->\$i=".$message->$i);
+                    $val .= $this->escape($message->$i);
+		}
+                $val.=';';
+	    
+		if ($i === 'body' && isset($message->$i))
+		    $hasNote = true;
+            }
+	    
+	    if(preg_match('/^[;]*$/',$val))
+		continue;
+
+	    ZLog::Write(LOGLEVEL_DEBUG,"\$val=$val");
+            $val = substr($val,0,-1);
+            if(strlen($val)>50){
+                $data .= $v.":\n\t".substr(chunk_split($val, 50, "\n\t"), 0, -1);
+            }else{
+                $data .= $v.':'.$val."\n";
+	    }
+        }
+        if(!empty($message->categories))
+            $data .= 'CATEGORIES:'.implode(',', $this->escape($message->categories))."\n";
+        if(!empty($message->picture))
+            $data .= 'PHOTO;ENCODING=BASE64;TYPE=JPEG:'."\n\t".substr(chunk_split($message->picture, 50, "\n\t"), 0, -1);
+        if(isset($message->birthday))
+	    $data .= 'BDAY:'.date('Y-m-d', $message->birthday)."\n";
+	if(!$hasNote) {
+	    ZLog::Write(LOGLEVEL_DEBUG, "Keeping old note");
+	    $data .= 'NOTE:'.$oldNote."\n";
+	} else {
+	    ZLog::Write(LOGLEVEL_DEBUG, "Using new note");
+	}
+
+// not supported: anniversary, assistantname, assistnamephonenumber, children, department, officelocation, radiophonenumber, spouse, rtf
 	$data .= "UID:$id\n";
 	$data .= "END:VCARD";
 
