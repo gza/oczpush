@@ -352,9 +352,8 @@ class BackendOCContacts extends BackendDiff {
         
 		if(isset($vcard['email'])) {
 			foreach($vcard['email'] as $email) {
-				if(!isset($tel['type'])) {
-					$tel['type'] = array();
-				}
+				if(!isset($tel['type'])) $tel['type'] = array();
+				if(!isset($email['type'])) $email['type'] = array();
 				if(in_array('home', $email['type'])) {
 					$message->email1address = $email['val'][0];
 				} elseif(in_array('work', $email['type'])) {
@@ -737,7 +736,7 @@ class BackendOCContacts extends BackendDiff {
 
     function jpegWithSize($picture,$maxSize,$stepsize=0.25) {
     	$image=new OC_Image($picture);
-	$b64=base64_encode($this->gd2jpeg($image));
+	$b64=$this->gd2jpeg($image);
 	ZLog::Write(LOGLEVEL_DEBUG, 'jpegWithSize : start with curSize: '.strlen($b64).' o / '.$maxSize.' o');
         if (strlen($b64) > $maxSize) {
                 ZLog::Write(LOGLEVEL_DEBUG, 'jpegWithSize : curSize: '.strlen($b64).' o >'.$maxSize.' o');
