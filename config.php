@@ -61,7 +61,7 @@
 /**********************************************************************************
  *  Default FileStateMachine settings
  */
-    define('STATE_DIR', '/var/lib/z-push/');
+    define('STATE_DIR', '/var/lib/oczpush/');
 
 
 /**********************************************************************************
@@ -81,9 +81,9 @@
  *  ones, e.g. setting to LOGLEVEL_DEBUG will also output LOGLEVEL_FATAL, LOGLEVEL_ERROR,
  *  LOGLEVEL_WARN and LOGLEVEL_INFO level entries.
  */
-    define('LOGFILEDIR', '/var/log/z-push/');
-    define('LOGFILE', LOGFILEDIR . 'z-push.log');
-    define('LOGERRORFILE', LOGFILEDIR . 'z-push-error.log');
+    define('LOGFILEDIR', '/var/log/oczpush/');
+    define('LOGFILE', LOGFILEDIR . 'oczpush.log');
+    define('LOGERRORFILE', LOGFILEDIR . 'oczpush-error.log');
     define('LOGLEVEL', LOGLEVEL_DEBUG);
     define('LOGAUTHFAIL', false);
 
@@ -213,7 +213,7 @@
     // **********************
     //  BackendOCCombined settings
     // **********************
-    define('OC_DIR', '/var/www/localhost/htdocs/owncloud');
+    define('OC_DIR', '/var/www/owncloud');
     // uncomment if you want to use a mail backend BackendMaildir -> m, BackendIMAP -> i
     // define('OC_MAIL', 'i');
 
