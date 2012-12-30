@@ -46,7 +46,8 @@ mkdir -p /var/log/oczpush/ /var/lib/oczpush/ /var/www/oczpush/
 chown www-data:www-data /var/log/oczpush/ /var/lib/oczpush/ 
 
 - edit /var/www/oczpush/config.php
+NB: if you installed from debian package, this is probably '/usr/share/owncloud', otherwise, you know better than me :)
 define('OC_DIR', '/var/www/owncloud');
 
-Upgrade z-push codebase :
-- z-push's .svn is integrated, svn up should work, but will probably prevent any git pull to work anymore
+- optional, if you know what you do, Upgrade z-push codebase :
+z-push's .svn is integrated, svn up should work, but will probably prevent any git pull to work anymore
