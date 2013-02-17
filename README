@@ -1,5 +1,23 @@
 oczupsh - ActiveSync for Owncloud
 
+!!! Not under Active developpement !!!
+!!! You WILL loose information !!! (Perhaps acceptable)
+
+Why ?:
+- It is at "work for me" stage and I don't have many time to work on it
+  Patches are accepted, but
+- VCARD from/to ActiveSync conversion is not bijective
+  the email type exemple :
+     - VCARD supports more then 3 email address, AS don't
+     - VCARD's email address can be qualified (HOME or WORK)
+     - AS only have email1, email2, email3
+  So if you have a contact with a HOME and WORK email, you'll loose this information
+- With Android (VCARD based) and protocol based on MSActiveSync is a bad Idea
+  VCARD <-> ActiveSync <-> VCARD
+  There is two VCARD based product synced by AS protocol leads to big data mess.
+
+OLD README:
+
 Based on
 - z-push 2.0.6 stable's svn version
    http://svn.berlios.de/svnroot/repos/z-push/release/2.0
