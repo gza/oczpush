@@ -51,7 +51,7 @@ class BackendOCContacts extends BackendDiff {
         if(OC_User::login($username,$password)){
             OC_Util::setUpFS();
      	    ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::Logon : Logged');
-	    $addressBooks = OC_Contacts_Addressbook::All($username);
+	    $addressBooks = \OCA\Contacts\Addressbook::All($username);
 	    $this->addressBookId = $addressBooks[0]['id'];
      	    ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::Logon : addressBook selected :'.$addressBooks[0]['displayname']);
 	    $this->userTZ=\OCP\Config::getUserValue(\OCP\USER::getUser(), 'calendar', 'timezone', date_default_timezone_get());
@@ -219,7 +219,7 @@ class BackendOCContacts extends BackendDiff {
         ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::GetMessageList('.$folderid.')');
         $messages = array();
 
-	foreach ( OC_Contacts_VCard::all($this->addressBookId) as $cardEntry ) {
+	foreach ( \OCA\Contacts\VCard::all($this->addressBookId) as $cardEntry ) {
 		$message["id"] = substr($cardEntry['uri'],0,-4);		
 		$message["mod"] = $cardEntry['lastmodified'];
 		$message["flags"] = 1;
@@ -264,7 +264,7 @@ class BackendOCContacts extends BackendDiff {
         // Parse the vcard
         $message = new SyncContact();
 
-	$card=OC_Contacts_VCard::findWhereDAVDataIs($this->addressBookId, $id.'.vcf');
+	$card=\OCA\Contacts\VCard::findWhereDAVDataIs($this->addressBookId, $id.'.vcf');
 	$data = $card['carddata'];
 
         $data = str_replace("\x00", '', $data);
@@ -496,7 +496,7 @@ class BackendOCContacts extends BackendDiff {
 
         $message = array();
 
-	$cardEntry=OC_Contacts_VCard::findWhereDAVDataIs($this->addressBookId,$id.'.vcf');
+	$cardEntry=\OCA\Contacts\VCard::findWhereDAVDataIs($this->addressBookId,$id.'.vcf');
 //	ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::StatMessage('.print_r($cardEntry,true));
         $message["id"] = substr($cardEntry['uri'],0,-4);
 	$message["mod"] = $cardEntry['lastmodified'];
@@ -556,7 +556,7 @@ class BackendOCContacts extends BackendDiff {
 	} else {
 		$newvcard = false;
 
-		$card = OC_Contacts_VCard::findWhereDAVDataIs($this->addressBookId, $id.'.vcf');
+		$card = \OCA\Contacts\VCard::findWhereDAVDataIs($this->addressBookId, $id.'.vcf');
 		$data = $card['carddata'];
 		$data = str_replace("\x00", '', $data);
 		$data = str_replace("\r\n", "\n", $data);
@@ -630,10 +630,10 @@ class BackendOCContacts extends BackendDiff {
 	if ($newvcard)
 	{
 		ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::ChangeMessage, OC_Contacts_VCard::add('.$this->addressBookId.', '.$data);
-		OC_Contacts_VCard::addFromDAVData($this->addressBookId,$id.".vcf",$data);
+		\OCA\Contacts\VCard::addFromDAVData($this->addressBookId,$id.".vcf",$data);
         } else {
 		ZLog::Write(LOGLEVEL_DEBUG, 'OCContacts::ChangeMessage, OC_Contacts_VCard::edit('.$this->addressBookId.', '.$data);
-		OC_Contacts_VCard::editFromDAVData($this->addressBookId,$id.".vcf",$data);
+		\OCA\Contacts\VCard::editFromDAVData($this->addressBookId,$id.".vcf",$data);
 	}
         return $this->StatMessage($folderid, $id);
     }
@@ -664,8 +664,8 @@ class BackendOCContacts extends BackendDiff {
      * @throws StatusException              could throw specific SYNC_STATUS_* exceptions
      */
     public function DeleteMessage($folderid, $id) {
-	$card=OC_Contacts_VCard::findWhereDAVDataIs($this->addressBookId,$id.'.vcf');
-	return OC_Contacts_VCard::delete($card['id']);
+	$card=\OCA\Contacts\VCard::findWhereDAVDataIs($this->addressBookId,$id.'.vcf');
+	return \OCA\Contacts\VCard::delete($card['id']);
     }
 
     /**
